@@ -27,7 +27,7 @@ try {
 namespace eval ::plugins::DYE {
 	variable author "Enrique Bengoechea"
 	variable contact "enri.bengoechea@gmail.com"
-	variable version 2.50
+	variable version 2.51
 	variable github_repo ebengoechea/de1app_plugin_DYE
 	variable name [translate "Describe Your Espresso"]
 	variable description [translate "Describe any shot from your history and plan the next one: beans, grinder, extraction parameters and people. Also includes beans-based workflow, shot history management, and profile tools."]
@@ -3654,16 +3654,10 @@ proc ::dui::pages::DYE::open_history_viewer {} {
 proc ::dui::pages::DYE::history_viewer_callback { left_clock right_clock } {
 	variable data
 	
-#	if { $left_clock eq "" } { 
-#		dui page show DYE
-#	} else {
-#		set previous_page $data(previous_page)
-#		dui page load DYE [lindex $left_clock 0]
-#		set data(previous_page) $previous_page
-#	}
-	
 	if { $left_clock ne "" } { 
 		dui page load DYE [lindex $left_clock 0]
+	} else {
+		dui page show DYE
 	}
 	
 }

@@ -2,6 +2,11 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.51] - 2025-18-09
+
+### Changed
+ - Add back code to properly return from main app history viewer when no shot is selected, as spotted by John Buckmann.
+
 ## [2.50] - 2024-11-10
 
 ### Changed
