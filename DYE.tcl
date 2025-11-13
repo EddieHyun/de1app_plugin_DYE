@@ -3124,6 +3124,7 @@ namespace eval ::dui::pages::DYE {
 		apply_action_to {beans equipment ratio people}
 		days_offroast_msg {}
 		ratio_and_time_label {}
+		known_grinder_settings {}
 	}
 	#		other_equipment {}
 
@@ -3246,7 +3247,11 @@ proc ::dui::pages::DYE::setup {} {
 	
 	# Grinder setting
 	incr y 100
-	dui add dcombobox $page $x_left_field $y -tags grinder_setting -width $width_left_field \
+	dui add dbutton $page [expr {$x_left_field+25}] $y -tags grinder_setting_up -symbol chevron-up -symbol_pos {0.25 0.25} \
+		-command grinder_setting_navigate_up
+	dui add dbutton $page [expr {$x_left_field+135}] $y -tags grinder_setting_down -symbol chevron-down -symbol_pos {0.25 0.25} \
+		-command grinder_setting_navigate_down
+	dui add dcombobox $page [expr {$x_left_field+240}] $y -tags grinder_setting -width [expr {$width_left_field*0.6}] \
 		-label [translate [::plugins::SDB::field_lookup grinder_setting name]] -label_pos [list $x_left_label $y] \
 		-command grinder_setting_select
 	
@@ -3825,13 +3830,80 @@ proc ::dui::pages::DYE::select_grinder_model_callback { value id type } {
 	}
 }
 
+proc ::dui::pages::DYE::populate_known_grinder_settings {} {
+	variable data
+	
+	# load available grinder settings from DB
+	if { $data(grinder_model) eq "" } {
+		set data(known_grinder_settings) {}
+		return
+	}
+	
+	set data(known_grinder_settings) [::plugins::SDB::available_categories grinder_setting 1 " grinder_model=[::plugins::SDB::string2sql $data(grinder_model)]"]
+	if {[catch {
+		set data(known_grinder_settings) [lsort -descending -real $data(known_grinder_settings)]
+	} result]} {
+		# sort failure. order remains.
+	}
+}
+
+proc ::dui::pages::DYE::grinder_setting_navigate_up {} {
+	variable data
+	dui sound make button_in
+
+	if { $data(grinder_model) eq "" || [llength $data(known_grinder_settings)] == 0 } {
+		return
+	}
+	
+	set current_setting $data(grinder_setting)
+	set current_idx [lsearch $data(known_grinder_settings) $current_setting]
+	
+	if { $current_idx == -1 } { # current setting not found
+		set new_idx 0
+	} else { # current setting found
+		incr current_idx -1
+		if { $current_idx < 0 } {
+			set new_idx 0
+		} else {
+			set new_idx $current_idx
+		}
+	}
+	
+	set data(grinder_setting) [lindex $data(known_grinder_settings) $new_idx]
+}
+proc ::dui::pages::DYE::grinder_setting_navigate_down {} {
+	variable data
+	dui sound make button_in
+
+	if { $data(grinder_model) eq "" || [llength $data(known_grinder_settings)] == 0 } {
+		return
+	}
+	
+	set current_setting $data(grinder_setting)
+	set current_idx [lsearch $data(known_grinder_settings) $current_setting]
+	set last_idx [expr {[llength $data(known_grinder_settings)] - 1}]
+	
+	if { $current_idx == -1 } { # current setting not found
+		set new_idx $last_idx
+	} else { # current setting found
+		incr current_idx 1
+		if { $current_idx >= [llength $data(known_grinder_settings)] } {
+			set new_idx $last_idx
+		} else {
+			set new_idx $current_idx
+		}
+	}
+	
+	set data(grinder_setting) [lindex $data(known_grinder_settings) $new_idx]
+}
+
 proc ::dui::pages::DYE::grinder_setting_select { variable values args} {	
 	variable data
 	dui sound make button_in
 	if { $data(grinder_model) eq "" } return
 
 	dui page open_dialog dui_item_selector ::dui::pages::DYE::data(grinder_setting) -theme [dui theme get] \
-		[::plugins::SDB::available_categories grinder_setting 1 " grinder_model=[::plugins::SDB::string2sql $data(grinder_model)]"] \
+		$data(known_grinder_settings) \
 		-page_title [translate "Select the grinder setting"] -selected $data(grinder_setting) -listbox_width 700 
 }
 
@@ -3839,6 +3911,7 @@ proc ::dui::pages::DYE::grinder_model_change {} {
 	variable data
 	
 	dui item enable_or_disable [expr {$data(grinder_model) ne ""}] [namespace tail [namespace current]] grinder_setting-dda
+	populate_known_grinder_settings
 }
 
 proc ::dui::pages::DYE::field_in_apply_to { field apply_to } {
@@ -4112,6 +4185,8 @@ proc ::dui::pages::DYE::load_description {} {
 #			}
 #		}
 #	}
+
+	populate_known_grinder_settings
 
 	# Ensure the profile's advanced_shot variable is always defined
 	switch $src_data(settings_profile_type) \
