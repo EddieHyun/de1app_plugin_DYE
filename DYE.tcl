@@ -3841,7 +3841,7 @@ proc ::dui::pages::DYE::populate_known_grinder_settings {} {
 	
 	set data(known_grinder_settings) [::plugins::SDB::available_categories grinder_setting 1 " grinder_model=[::plugins::SDB::string2sql $data(grinder_model)]"]
 	if {[catch {
-		set data(known_grinder_settings) [lsort -descending -real $data(known_grinder_settings)]
+		set data(known_grinder_settings) [lsort -decreasing -real $data(known_grinder_settings)]
 	} result]} {
 		# sort failure. order remains.
 	}
@@ -10914,5 +10914,6 @@ foreach fn "drinker_name repository_links" {
 		set ::settings($fn) {}
 	}
 }
+
 
 
